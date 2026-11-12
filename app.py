@@ -1,7 +1,7 @@
 from flask import Flask, send_from_directory, render_template, flash, redirect, request, session
 import pymysql
 import pymysql.cursors
-from wander_travel_itinerary.queries import (get_db, select_marker_by_location, select_top_markers, get_cities, get_boards_by_user,
+from queries import (get_db, select_marker_by_location, select_top_markers, get_cities, get_boards_by_user,
                     get_board, create_board, update_board_name, delete_board)
 
 app = Flask(__name__)
