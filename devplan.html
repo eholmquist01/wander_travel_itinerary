@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>waNDer — Project Plan</title>
+<style>
+  body { font-family: Georgia, serif; max-width: 700px; margin: 40px auto; padding: 0 20px; line-height: 1.6; color: #222; }
+  h1 { font-size: 28px; margin-bottom: 4px; }
+  h2 { font-size: 20px; margin-top: 40px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+  h3 { font-size: 16px; margin-top: 20px; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+  th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; font-size: 14px; }
+  ul { margin: 4px 0; padding-left: 22px; }
+</style>
+</head>
+<body>
+
+<a href="project.html">Project Description (Stage 1)</a>
+
+<h1>waNDer</h1>
+
+<p>A collaborative travel-planning tool with shareable boards, top-rated site suggestions, map routing, and a "mapped" yearly summary of your trips.</p>
+
+
+<h2>Stage 2 — Development Plan</h2>
+
+<h3>Tech Stack &amp; Data</h3>
+<p>Database: MySQL via db8.nd.cse. Frontend: PHP + HTML. Advanced functions: Python.</p>
+<p>Data source: <a href="https://business.yelp.com/data/resources/open-dataset/">Yelp Open Dataset</a> — free for academic use, 11 cities, 4 chosen: Edmonton (Alberta), Tucson (Arizona), Indianapolis (Indiana), Tampa (Florida). May be trimmed if data volume is too high.</p>
+
+<h3>Team Roles</h3>
+<table>
+  <tr><th>Team</th><th>Members</th><th>Scope</th></tr>
+  <tr><td>1. Data &amp; Schema Conspiracy</td><td>Emmalyn, Maeve</td><td>Yelp dataset cleaning/loading, relational schema (Stage 2 deliverable), keys/functional dependencies, basic search/query functions</td></tr>
+  <tr><td>2. Boards &amp; UI Dazzle</td><td>Candice, Lucia</td><td>Board creation/edit/delete, frontend UI/UX, PHP-to-DB rendering of board contents</td></tr>
+  <tr><td>3. Recommendation Engine Parliament (Adv. #1)</td><td>Lucia, Emmalyn</td><td>Ranking algorithm using review data — weighted rating + recency + category match</td></tr>
+  <tr><td>4. Reviews/Accounts Gaggle (Adv. #2)</td><td>Maeve, Candice</td><td>Auth, reviews, sharing/collaboration for boards</td></tr>
+  <tr><td>5. Optional add-ons</td><td>Whoever has time</td><td>waNDer Mapped stats engine; live maps/routing integration</td></tr>
+</table>
+
+<h3>Schema</h3> 
+<pre>Boards (
+	board_id int primary key,
+	title char(50),
+	destination char(30),
+	time_created datetime,
+	collaborator_ids int
+)
+
+Have (
+	Boards.board_id int primary key,
+	Markers.name char(50) primary key,
+	Markers.addr char(50) primary key
+)
+
+Markers ( 
+	name char(50) primary key,
+	addr char(50) primary key,
+	category char(50), 
+	rating int
+)
+
+Reviews (
+	review_id int primary key,
+	Users.user_id int foreign  key,
+	Markers.name char(50) foreign key,
+	Markers.addr char(50) foreign key,
+	text varchar(300)
+)
+
+Interests(
+	Users.user_id int primary key foreign key,
+	interest_name char(50) primary key,
+	rank int 
+)
+
+Users(
+	user_id int primary key, 
+	name char(50), 
+	email char(50),
+	password char(50)
+)
+
+Choose(
+	Users.user_id int primary key, 
+	Interests.interest_name primary key
+)
+Create (
+	Boards.board_id int primary key,
+	Users.user_id int primary key, 
+)
+
+Suggest(
+	Markers.name char(50) primary key,
+	Markers.addr char(50) primary key
+	Interests.interest_name char(50) primary key
+	User.user_name char(50) primary key
+)
+</pre>
+
+
+
+<h2>Milestones &amp; Timeline</h2>
+
+<h3>Stage 2 — Development Plan (Due Wed, Sept 30)</h3>
+<p>Relational schema covering boards, markers, map, reviews, users, interests. Chosen cities finalized. Division of labor + timeline.</p>
+
+<h3>Stage 3 — Basic Core Build &amp; Demo (Due Nov 4)</h3>
+<p><strong>Weeks 1–2:</strong> Data &amp; Schema: load Yelp dataset into MySQL (10,000+ rows across 4 cities), build tables for boards/markers/reviews/users/interests. Boards &amp; UI: boards table + create/delete UI, account creation, welcome/login page, interests entry, profile page, "your boards" page.</p>
+<p><strong>Weeks 3–4:</strong> Data &amp; Schema: multi-table join search query (e.g. category + city joined with avg review score). Boards &amp; UI: add-details-to-board workflow, update/delete items, new-board form, all-boards page with city header images.</p>
+<p><strong>Week 5:</strong> Frontend/backend integration check. Populate real data, end-to-end test insert/update/delete/search. Write up advanced-functions plan. Demo, presenting both advanced-function plans.</p>
+
+<h3>Stage 4 — Advanced Functions, Final Demo &amp; Report (Video Dec 7 &amp; 9, report+zip due finals day 10am)</h3>
+<p><strong>Weeks 1–2:</strong> Recommendation Engine: define ranking approach (weighted rating + review count + category relevance), first working version. Reviews/Accounts: authorize accounts, leave reviews on a marker.</p>
+<p><strong>Weeks 3–4:</strong> Recommendation Engine: full ranking algorithm — factor in review recency, category match to board items, geographic proximity, user interests from sign-up; wire results into board UI. Reviews/Accounts: share function for boards, permissions mechanism via collaborators_ID.</p>
+<p><strong>Week 5:</strong> Stretch goals if time (mapped highlights, map/routing). Bug fixes and polish. Finalize advanced-function write-ups. Record 2-minute YouTube video. Draft final PDF report (summary, ER diagram, one basic function's SQL/dataflow, both advanced functions, one technical challenge, final division of labor).</p>
+<p>Final demo covers basic functions (insert/update/delete, multi-join search) and both advanced functions (recommendation engine, collaborative boards). Submit PDF report + zip of project files.</p>
+
+
+
+
+
+</body>
+</html>

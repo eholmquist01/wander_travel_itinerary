@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Log in WaNDer{% endblock %}
+{% block content %}
+<div class="card">
+    <h1>Welcome!</h1>
+    <p>Please log in.</p>
+    <hr />
+    <form method="post">
+      <label for="email"> <b>Email</b></label>
+      <input
+        type="email"
+        placeholder="Enter Email"
+        name="email"
+        id="email"
+        required="required"
+      />
+      <label for="password"> <b>Password</b></label>
+      <input
+        type="password"
+        placeholder="Enter Password"
+        name="password"
+        id="password"
+        required="required"
+      />
+      <hr />
+
+      <button type="submit">Log In</button>
+    </form>
+
+    <div>
+        <p>
+            Don't have an account? 
+            <a href="/signup">Create an account</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

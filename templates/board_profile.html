@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}My Boards | waNDer {% endblock %}
+{% block content %}
+<h1>Hi, {{ name }}</h1>
+
+<p><a href="/boards/new">+ Create a board</a></p>
+
+<h2>My Boards</h2>
+
+{% for board in boards %}
+    <div class="card">
+        <h3><a href="/boards/{{ board.board_id }}">{{ board.title }}</a></h3>
+        <p>
+            {{ board.destination }}
+            {% if board.time_created %}
+                Created {{ board.time_created.strftime('%b %d, %Y') }}
+            {% endif %}        
+        </p>
+    </div>
+{% else %}
+    <p>You don't have any boards yet.</p>
+{% endfor %}
+{% endblock %}

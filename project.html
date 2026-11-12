@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>waNDer — Project Description</title>
+<style>
+  body { font-family: Georgia, serif; max-width: 700px; margin: 40px auto; padding: 0 20px; line-height: 1.6; color: #222; }
+  h1 { font-size: 28px; margin-bottom: 4px; }
+  h2 { font-size: 20px; margin-top: 40px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+  h3 { font-size: 16px; margin-top: 20px; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+  th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; font-size: 14px; }
+  ul { margin: 4px 0; padding-left: 22px; }
+</style>
+</head>
+<body>
+	<a href="devplan.html">Development Plan (Stage 2)</a>
+
+  <h1>waNDer</h1>
+
+  <h2>Description</h2>
+  <p>
+    The purpose of waNDer is to provide a collaborative tool for travel planning.
+    Not only will it suggest top rated sites near your specified location, it will
+    feature shareable boards (think Pinterest) which provide a mood board aesthetic
+    for your trip. It will also have a map to route your planned activities/restaurants,
+    and a 'mapped' feature which summarizes your planned trips, how many locations you
+    have planned, and other highlights.
+  </p>
+
+  <h2>Usefulness</h2>
+  <p>
+    While a tool like Pinterest may be suitable for saving pins and ideas for your travel,
+    it doesn't have a routing or mapping feature. Further, while there are travel routing
+    apps, they may not suggest top rated sites or provide the aesthetic mood board layout
+    for planning multiple unique trips like waNDer does.
+  </p>
+
+  <h2>Realness</h2>
+  <p>
+    Yelp Open Dataset - this dataset contains reviews, addresses, business types, business
+    names, etc of over 150,000 businesses across 11 metropolitan areas.
+  </p>
+
+  <h2>Description of the Functionality</h2>
+
+  <h3>Basic Functions</h3>
+  <ul>
+    <li>
+      Create a new board
+      <ul>
+        <li>Within a board, you should be able to add businesses, locations, and activities; these should be recommended based on data on reviews</li>
+      </ul>
+    </li>
+    <li>
+      Create new reviews
+      <ul>
+        <li>Users would be able to leave new reviews for markers visited during their trip</li>
+      </ul>
+    </li>
+    <li>
+      Create user account
+      <ul>
+        <li>User accounts require a username, password, and email upon sign-in to ensure they can keep their progress</li>
+      </ul>
+    </li>
+    <li>Search/print out business locations or activities</li>
+    <li>Delete boards</li>
+    <li>Add to boards/update trips</li>
+    <li>Render map with markers of the locations you are interested in visiting</li>
+  </ul>
+
+  <h3>Advanced Functions</h3>
+  <ul>
+    <li>
+      Share trips with other users
+      <ul>
+        <li>This allows trips to be collaborative, which is fun because you can plan your group trips together.</li>
+      </ul>
+    </li>
+    <li>
+      waNDer Mapped - summary and highlights of the boards that you created
+      <ul>
+        <li>Examples:
+          <ul>
+            <li>How many destinations did you plan this year</li>
+            <li>How many friends did you share with</li>
+            <li>How many destinations you went to</li>
+            <li>Your favorite places were</li>
+            <li>The most amount of places you visited on one trip</li>
+            <li>Number of reviews &amp; how many reactions</li>
+            <li>Comparison to other users (top 2% of users)</li>
+          </ul>
+        </li>
+        <li>The mapped feature is cool because it goes through your entire travel plans of the year and gives you all the stats and fun things you did to reminisce on. You can also compare your stats with your friends.</li>
+      </ul>
+    </li>
+  </ul>
+  <a href="https://drive.google.com/file/d/1Rs12jWi58Kei3myjD5Z43O7lRmju8o9V/view?usp=sharing">ER Diagram</a>
+
+  <h2>Assumptions:</h2>
+
+  <ul>
+	  <li>The data we are using is reliable - i.e., businesses have not closed since then, the reviews/ratings are accurate
+</li>
+<li>
+	Boards can only include one map at a time - users will need to create multiple boards to explore multiple destinations
+</li>
+<li>
+	There are only 11 metropolitan locations in our data, so users will not be able to explore every city in the world
+</li>
+<li>
+	Markers represent locations on the map - restaurants, activities, museums, location
+</li>
+  </ul>
+
+</body>
+</html>
+
