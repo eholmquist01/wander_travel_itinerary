@@ -137,3 +137,29 @@ def set_board_image(board_id, filename, user_id):
         (filename, board_id, user_id)
     )
 
+# Add collaborator; if this user is already a collaborator, return false to avoid duplicate key
+def add_collaborator(board_id, other_user_id):
+    # Check whether the user exists
+    user = query("""
+        SELECT user_id
+        FROM Users
+        WHERE user_id = %s
+    """, (other_user_id,))
+
+    if not user:
+        return False  # User doesn't exist
+    #make sure other user isnt already a collaborator
+    existing = query("""
+        SELECT *
+        FROM Users_Create
+        WHERE board_id = %s AND user_id = %s
+    """, (board_id, other_user_id))
+
+    if existing:
+        return False
+        
+    return execute("""
+        INSERT INTO Users_Create (board_id, user_id, role)
+        VALUES (%s, %s, 'collaborator')
+    """, (board_id, other_user_id))
+    
