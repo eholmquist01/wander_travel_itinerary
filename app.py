@@ -1,11 +1,20 @@
+import os
+import uuid
+
 from flask import Flask, send_from_directory, render_template, flash, redirect, request, session
 import pymysql
 import pymysql.cursors
 from queries import (get_db, select_marker_by_location, select_top_markers, get_cities, get_boards_by_user,
-                    get_board, create_board, update_board_name, delete_board)
+                    get_board, create_board, update_board_name, delete_board, set_board_image)
 
 app = Flask(__name__)
 app.secret_key = "wander-session-key"
+
+# Image upload settings
+UPLOAD_DIR = os.path.join(app.root_path, "static", "uploads")
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
+app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # 5 MB
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # Stage 1 + 2 access points
 @app.route("/")
@@ -127,6 +136,44 @@ def rename_board(board_id):
         flash("Board renamed")
     else:
         flash("Couldn't rename that board")
+    return redirect("/profile")
+
+# Upload or change a board's image
+@app.route("/boards/<int:board_id>/image", methods=["POST"])
+def upload_board_image(board_id):
+    if "user_id" not in session:
+        return redirect("/login")
+
+    image = request.files.get("image")
+    if image is None or image.filename == "":
+        flash("Choose an image first.")
+        return redirect("/profile")
+
+    extension = image.filename.rsplit(".", 1)[-1].lower() if "." in image.filename else ""
+    header = image.stream.read(12)
+    image.stream.seek(0)
+    looks_like_image = (header.startswith(b"\x89PNG")
+                        or header.startswith(b"\xff\xd8\xff")
+                        or header.startswith(b"GIF8")
+                        or (header[:4] == b"RIFF" and header[8:12] == b"WEBP"))
+    if extension not in ALLOWED_EXTENSIONS or not looks_like_image:
+        flash("Use a PNG, JPG, GIF or WebP image.")
+        return redirect("/profile")
+
+    filename = uuid.uuid4().hex + "." + extension
+    image.save(os.path.join(UPLOAD_DIR, filename))
+
+    if set_board_image(board_id, filename, session["user_id"]):
+        flash("Image saved.")
+    else:
+        os.remove(os.path.join(UPLOAD_DIR, filename))
+        flash("Only the person who created a board can change its image.")
+    return redirect("/profile")
+
+# Shown when an image is over 5 MB
+@app.errorhandler(413)
+def image_too_large(error):
+    flash("That image is over 5 MB. Choose a smaller one.")
     return redirect("/profile")
 
 # Delete Board from Page

@@ -54,7 +54,7 @@ def get_cities():
 # Get boards by user
 def get_boards_by_user(user_id):
     return query(
-        "SELECT Boards.board_id, Boards.title, Boards.destination, Boards.time_created "
+        "SELECT Boards.board_id, Boards.image_filename, Boards.title, Boards.destination, Boards.time_created "
         "FROM Boards "
         "JOIN Users_Create ON Users_Create.board_id = Boards.board_id "
         "WHERE Users_Create.user_id = %s "
@@ -126,6 +126,15 @@ def delete_user(user_id):
 def update_board_name(new_name, board_id, user_id):
     return execute("UPDATE Boards SET title = %s WHERE board_id = %s AND creator_id = %s",
     (new_name, board_id, user_id)
+    )
+
+# Save an image for a board. Only the creator can change it.
+# Returns the number of rows updated (0 means it was not allowed).
+def set_board_image(board_id, filename, user_id):
+    return execute(
+        "UPDATE Boards SET image_filename = %s "
+        "WHERE board_id = %s AND creator_id = %s",
+        (filename, board_id, user_id)
     )
 
 # Add collaborator; if this user is already a collaborator, return false to avoid duplicate key

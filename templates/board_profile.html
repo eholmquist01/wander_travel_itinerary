@@ -1,23 +1,54 @@
 {% extends "base.html" %}
-{% block title %}My Boards | waNDer {% endblock %}
+{% block title %}My boards - Wander{% endblock %}
+
 {% block content %}
-<h1>Hi, {{ name }}</h1>
+  <div class="page-header">
+    <h1>My boards</h1>
+    <a class="btn" href="/boards/new">New board</a>
+  </div>
 
-<p><a href="/boards/new">+ Create a board</a></p>
+  {% if boards %}
+    <ul class="board-grid">
+      {% for board in boards %}
+        <li class="card">
+          {% if board.image_filename %}
+            <img class="card-image" src="{{ url_for('static', filename='uploads/' + board.image_filename) }}" alt="Photo for {{ board.title }}">
+          {% else %}
+            <div class="card-placeholder">{{ board.title[:1]|upper }}</div>
+          {% endif %}
 
-<h2>My Boards</h2>
+          <div class="card-body">
+            <h2 class="card-title"><a href="/boards/{{ board.board_id }}">{{ board.title }}</a></h2>
+            <p class="card-date">Created {{ board.time_created.strftime('%b %d, %Y') }}</p>
+          </div>
 
-{% for board in boards %}
-    <div class="card">
-        <h3><a href="/boards/{{ board.board_id }}">{{ board.title }}</a></h3>
-        <p>
-            {{ board.destination }}
-            {% if board.time_created %}
-                Created {{ board.time_created.strftime('%b %d, %Y') }}
-            {% endif %}        
-        </p>
+          <div class="card-footer">
+            <form class="upload-form" method="post" action="/boards/{{ board.board_id }}/image" enctype="multipart/form-data">
+              <input type="file" name="image" accept="image/png,image/jpeg,image/gif,image/webp" required>
+              <button class="btn-small" type="submit">{% if board.image_filename %}Change image{% else %}Upload image{% endif %}</button>
+            </form>
+
+            <div class="card-actions">
+              <details>
+                <summary class="btn btn-small btn-outline">Rename</summary>
+                <form method="post" action="/boards/{{ board.board_id }}/rename">
+                  <input type="text" name="title" value="{{ board.title }}" maxlength="50" required>
+                  <button class="btn-small" type="submit">Save</button>
+                </form>
+              </details>
+              <form method="post" action="/boards/{{ board.board_id }}/delete" onsubmit="return confirm('Delete this board?');">
+                <button class="btn-small btn-danger" type="submit">Delete</button>
+              </form>
+            </div>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="empty-state">
+      <h2>No boards yet</h2>
+      <p class="muted">Create a board to start planning a trip.</p>
+      <a class="btn" href="/boards/new">Create a board</a>
     </div>
-{% else %}
-    <p>You don't have any boards yet.</p>
-{% endfor %}
+  {% endif %}
 {% endblock %}
