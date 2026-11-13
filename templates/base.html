@@ -1,32 +1,39 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>{% block title %}waNDer{% endblock %}</title>
-    <link rel=""stylesheet" href="/static/css/style.css">
-  </head>
-  <body>
-    <nav>
-        <a class="logo" href="/">waNDer</a>
-        <div>
-            {% if session.get('user_id') %}
-                <a href="/profile">Profile</a>
-                <a href="/logout">Log out</a>
-            {% else %}
-                <a href="/login">Log in</a>
-                <a href="/signup">Sign up</a>
-            {% endif %}
-        </div>
-    </nav>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Wander{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
 
-    <main>
-        {% for message in get_flashed_messages() %}
-            <div class="flash">{{ message }}</div>
-        {% endfor %}
+  <header class="navbar">
+    <div class="navbar-inner">
+      <a class="brand" href="/">Wander</a>
 
-        {% block content %}{% endblock %}
-    </main>
-  </body>
+      <nav class="nav-links">
+        {% if session.user_id %}
+          <span class="nav-greeting">Hi, {{ session.name }}</span>
+          <a class="nav-btn" href="/profile">My boards</a>
+          <a class="nav-btn" href="/logout">Log out</a>
+        {% else %}
+          <a class="nav-btn" href="/login">Log in</a>
+          <a class="nav-btn" href="/signup">Sign up</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    {% with messages = get_flashed_messages() %}
+      {% for message in messages %}
+        <p class="flash">{{ message }}</p>
+      {% endfor %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+</body>
 </html>
