@@ -229,3 +229,11 @@ def get_city_categories(city):
         "ORDER BY total DESC "
         "LIMIT 40",
         (city,))
+
+# Returns 1 if added, 0 if it was already on the board
+def add_marker_to_board(board_id, business_id):
+    return execute(
+        "INSERT INTO Boards_Have (board_id, business_id) "
+        "SELECT %s, %s FROM DUAL "
+        "WHERE NOT EXISTS (SELECT 1 FROM Boards_Have WHERE board_id = %s AND business_id = %s)",
+        (board_id, business_id, board_id, business_id))

@@ -6,8 +6,8 @@ import pymysql
 import pymysql.cursors
 from queries import (get_db, select_marker_by_location, select_top_markers, get_cities, get_boards_by_user,
                     get_board, create_board, update_board_name, delete_board, set_board_image, 
-                    user_on_board, get_marker, get_board_marker_ids, select_places, get_city_categories)
-                    #add_marker_to_board, get_board_markers, remove_marker_from_board)
+                    user_on_board, get_marker, get_board_marker_ids, select_places, get_city_categories,
+                    add_marker_to_board) #, get_board_markers, remove_marker_from_board)
 
 app = Flask(__name__)
 app.secret_key = "wander-session-key"
@@ -204,5 +204,33 @@ def browse_places(board_id):
     saved_ids = get_board_marker_ids(board_id)
     return render_template("places.html", board=board, markers=markers,
                            saved_ids=saved_ids, category=category, categories=categories)
+
+# Add a place to a board
+@app.route("/boards/<int:board_id>/add/<business_id>", methods=["POST"])
+def add_place(board_id, business_id):
+    if "user_id" not in session:
+        return redirect("/login")
+
+    board = get_board(board_id)
+    if board is None or not user_on_board(board_id, session["user_id"]):
+        flash("Board not found.")
+        return redirect("/profile")
+
+    category = request.form.get("category", "").strip()
+    back = f"/boards/{board_id}/places"
+    if category:
+        back += "?category=" + quote(category)
+
+    marker = get_marker(business_id)
+    if marker is None:
+        flash("That place doesn't exist.")
+        return redirect(back)
+
+    if add_marker_to_board(board_id, business_id):
+        flash(f"Added {marker['name']} to {board['title']}.")
+    else:
+        flash(f"{marker['name']} is already on {board['title']}.")
+    return redirect(back + f"#place-{business_id}")
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5027, debug=True)
