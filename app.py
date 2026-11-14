@@ -125,49 +125,46 @@ def board_details(board_id):
     markers = select_marker_by_location(board["destination"], 50)
     return render_template("board_details.html", board=board, markers=markers)
 
-# Rename Board
-@app.route("/boards/<int:board_id>/rename", methods=["POST"])
-def rename_board(board_id):
-    if "user_id" not in session:
-        return redirect("/login")
-    
-    renamed_title = request.form["title"].strip()
-    if renamed_title and update_board_name(renamed_title, board_id, session["user_id"]):
-        flash("Board renamed")
-    else:
-        flash("Couldn't rename that board")
-    return redirect("/profile")
-
-# Upload or change a board's image
-@app.route("/boards/<int:board_id>/image", methods=["POST"])
-def upload_board_image(board_id):
+# Edit Board: change the name and/or image in one save
+@app.route("/boards/<int:board_id>/edit", methods=["POST"])
+def edit_board(board_id):
     if "user_id" not in session:
         return redirect("/login")
 
+    board = get_board(board_id)
+    if board is None:
+        flash("Board not found.")
+        return redirect("/profile")
+
+    # Name
+    new_title = request.form.get("title", "").strip()
+    if new_title and new_title != board["title"]:
+        if update_board_name(new_title, board_id, session["user_id"]):
+            flash(f"Board renamed to {new_title}.")
+        else:
+            flash("Couldn't rename that board.")
+
+    # Image (optional)
     image = request.files.get("image")
-    if image is None or image.filename == "":
-        flash("Choose an image first.")
-        return redirect("/profile")
+    if image is not None and image.filename != "":
+        extension = image.filename.rsplit(".", 1)[-1].lower() if "." in image.filename else ""
+        header = image.stream.read(12)
+        image.stream.seek(0)
+        looks_like_image = (header.startswith(b"\x89PNG")
+                            or header.startswith(b"\xff\xd8\xff")
+                            or header.startswith(b"GIF8")
+                            or (header[:4] == b"RIFF" and header[8:12] == b"WEBP"))
+        if extension not in ALLOWED_EXTENSIONS or not looks_like_image:
+            flash("Use a PNG, JPG, GIF or WebP image.")
+        else:
+            filename = uuid.uuid4().hex + "." + extension
+            image.save(os.path.join(UPLOAD_DIR, filename))
+            if set_board_image(board_id, filename, session["user_id"]):
+                flash("Board image updated.")
+            else:
+                os.remove(os.path.join(UPLOAD_DIR, filename))
+                flash("Only the person who created a board can change its image.")
 
-    extension = image.filename.rsplit(".", 1)[-1].lower() if "." in image.filename else ""
-    header = image.stream.read(12)
-    image.stream.seek(0)
-    looks_like_image = (header.startswith(b"\x89PNG")
-                        or header.startswith(b"\xff\xd8\xff")
-                        or header.startswith(b"GIF8")
-                        or (header[:4] == b"RIFF" and header[8:12] == b"WEBP"))
-    if extension not in ALLOWED_EXTENSIONS or not looks_like_image:
-        flash("Use a PNG, JPG, GIF or WebP image.")
-        return redirect("/profile")
-
-    filename = uuid.uuid4().hex + "." + extension
-    image.save(os.path.join(UPLOAD_DIR, filename))
-
-    if set_board_image(board_id, filename, session["user_id"]):
-        flash("Image saved.")
-    else:
-        os.remove(os.path.join(UPLOAD_DIR, filename))
-        flash("Only the person who created a board can change its image.")
     return redirect("/profile")
 
 # Shown when an image is over 5 MB
