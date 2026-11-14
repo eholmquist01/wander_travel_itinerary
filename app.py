@@ -7,7 +7,7 @@ import pymysql.cursors
 from queries import (get_db, select_marker_by_location, select_top_markers, get_cities, get_boards_by_user,
                     get_board, create_board, update_board_name, delete_board, set_board_image, 
                     user_on_board, get_marker, get_board_marker_ids, select_places, get_city_categories,
-                    add_marker_to_board) #, get_board_markers, remove_marker_from_board)
+                    add_marker_to_board, get_board_markers) # remove_marker_from_board)
 
 app = Flask(__name__)
 app.secret_key = "wander-session-key"
@@ -115,17 +115,17 @@ def new_board():
         return redirect(f"/boards/{board_id}/places")
     return render_template("board_form.html", cities=get_cities())
 
-# View Board Details
+# View Board Details: the places saved on this board
 @app.route("/boards/<int:board_id>")
 def board_details(board_id):
     if "user_id" not in session:
         return redirect("/login")
-    
+
     board = get_board(board_id)
-    if board is None:
-        flash("board doesn't exist.")
+    if board is None or not user_on_board(board_id, session["user_id"]):
+        flash("Board not found.")
         return redirect("/profile")
-    markers = select_marker_by_location(board["destination"], 50)
+    markers = get_board_markers(board_id)
     return render_template("board_details.html", board=board, markers=markers)
 
 # Edit Board: change the name and/or image in one save

@@ -1,69 +1,31 @@
 {% extends "base.html" %}
-{% block title %} {{ board.title }} | waNDer {% endblock %}
+{% from "_place_card.html" import place_card %}
+{% block title %}{{ board.title }} - Wander{% endblock %}
+
 {% block content %}
+  <a class="back-link" href="/profile">Back to my boards</a>
 
-<h1>{{ board.title }}</h1>
-<p>
-    {{board.destination}}
-    {% if board.time_created %}
-        Created {{ board.time_created.strftime('%b %d, %Y') }}
-    {% endif %}
-</p>
+  <div class="page-header">
+    <div>
+      <h1>{{ board.title }}</h1>
+      <p class="muted">
+        {{ board.destination }}{% if board.time_created %}, created {{ board.time_created.strftime('%b %d, %Y') }}{% endif %}
+      </p>
+    </div>
+    <a class="btn" href="/boards/{{ board.board_id }}/places">Add places</a>
+  </div>
 
-<!-- Delete Board -->
-<form method="post" action="/boards/{{ board.board_id }}/delete" style="display:inline"
-        onsubmit="return confirm('Delete board?');">
-    <button type="submit" style="width:auto">Delete board</button>
-</form>
-<hr />
-<!-- Update Board Title -->
-<form method="post" action="/boards/{{ board.board_id }}/rename" style="display:inline">
-    <input name="title" value="{{ board.title }}" maxlength=50 required="required">
-    <button type="submit" style="width:auto">Rename</button>
-</form>
-
-<!-- Top places at destination  -->
-<h2>Top places in {{ board.destination }}</h2>
-<p>{{ markers|length }} places, highest rated first</p>
-
-<div class="grid">
-    {% for marker in markers %}
-        <div class="pin">
-            <div class="info">
-                <strong>{{ marker.name }}</strong>
-                <br/>
-                {{ marker.address }}
-                <br/>
-                * {{ marker.stars }}
-            </div>
-        </div>
-    {% else %}
-        <p>No places found for {{ board.destination }}</p>
-    {% endfor %}
-</div>
-
-<div class="card">
-    <h2>Board Members</h2>
-    <p>Coming soon.</p>
-    {# Add back after the demo, with a get_board_members query:
-    {% for member in members %}
-        <p>{{ member.name }}</p>
-    {% else %}
-        <p>No members yet.</p>
-    {% endfor %}
-    #}
-    <hr />
-    <h2>Itinerary</h2>
-    <p>Coming soon.</p>
-    {# Add back after the demo, with a get_board_places query:
-    {% for place in places %}
-        <div>
-            <h3>{{ place.name }}</h3>
-            <p>{{ place.address }}</p>
-        </div>
-    {% else %}
-        <p>No places added yet.</p>
-    {% endfor %}
-    #}
-</div>
+  {% if markers %}
+    <ul class="place-grid">
+      {% for marker in markers %}
+        {{ place_card(marker, board, 'remove') }}
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="empty-state">
+      <h2>No places yet</h2>
+      <p class="muted">Browse places in {{ board.destination }} and add the ones you want to visit.</p>
+      <a class="btn" href="/boards/{{ board.board_id }}/places">Add places</a>
+    </div>
+  {% endif %}
 {% endblock %}

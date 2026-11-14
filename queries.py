@@ -237,3 +237,18 @@ def add_marker_to_board(board_id, business_id):
         "SELECT %s, %s FROM DUAL "
         "WHERE NOT EXISTS (SELECT 1 FROM Boards_Have WHERE board_id = %s AND business_id = %s)",
         (board_id, business_id, board_id, business_id))
+
+def get_board_markers(board_id):
+    return query(
+        "SELECT Markers.business_id, Markers.name, Markers.address, Markers.city, "
+        "Markers.stars, Markers.review_count, "
+        "GROUP_CONCAT(Categories.name ORDER BY Categories.name SEPARATOR ', ') AS categories "
+        "FROM Boards_Have "
+        "JOIN Markers ON Markers.business_id = Boards_Have.business_id "
+        "LEFT JOIN MarkerCategories ON MarkerCategories.business_id = Markers.business_id "
+        "LEFT JOIN Categories ON Categories.category_id = MarkerCategories.category_id "
+        "WHERE Boards_Have.board_id = %s "
+        "GROUP BY Markers.business_id, Markers.name, Markers.address, Markers.city, "
+        "Markers.stars, Markers.review_count "
+        "ORDER BY Markers.name",
+        (board_id,))
