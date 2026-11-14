@@ -26,10 +26,16 @@ def query(sql, params=(), one=False):
 # Select top markers for a location, top limit included
 def select_marker_by_location(city, limit):
     return query(
-        "SELECT Markers.business_id, Markers.name, Markers.address, Markers.city, Markers.stars "
+        "SELECT Markers.business_id, Markers.name, Markers.address, Markers.city, "
+        "Markers.stars, Markers.review_count, "
+        "GROUP_CONCAT(Categories.name ORDER BY Categories.name SEPARATOR ', ') AS categories "
         "FROM Markers "
+        "LEFT JOIN MarkerCategories ON MarkerCategories.business_id = Markers.business_id "
+        "LEFT JOIN Categories ON Categories.category_id = MarkerCategories.category_id "
         "WHERE Markers.city = %s "
-        "ORDER BY Markers.stars DESC "
+        "GROUP BY Markers.business_id, Markers.name, Markers.address, Markers.city, "
+        "Markers.stars, Markers.review_count "
+        "ORDER BY Markers.stars DESC, Markers.review_count DESC "
         "LIMIT %s",
         (city, limit)
     )
@@ -162,4 +168,92 @@ def add_collaborator(board_id, other_user_id):
         INSERT INTO Users_Create (board_id, user_id, role)
         VALUES (%s, %s, 'collaborator')
     """, (board_id, other_user_id))
-    
+
+def user_on_board(board_id, user_id):
+    row = query(
+        "SELECT 1 AS ok FROM Users_Create WHERE board_id = %s AND user_id = %s",
+        (board_id, user_id), one=True)
+    return row is not None
+
+
+def get_marker(business_id):
+    return query(
+        "SELECT business_id, name FROM Markers WHERE business_id = %s",
+        (business_id,), one=True)
+
+
+def get_board_marker_ids(board_id):
+    rows = query("SELECT business_id FROM Boards_Have WHERE board_id = %s", (board_id,))
+    return {r["business_id"] for r in rows}
+
+
+# Places in a city, optionally only those in one category
+def select_places(city, category, limit):
+    sql = (
+        "SELECT Markers.business_id, Markers.name, Markers.address, Markers.city, "
+        "Markers.stars, Markers.review_count, "
+        "GROUP_CONCAT(Categories.name ORDER BY Categories.name SEPARATOR ', ') AS categories "
+        "FROM Markers "
+        "LEFT JOIN MarkerCategories ON MarkerCategories.business_id = Markers.business_id "
+        "LEFT JOIN Categories ON Categories.category_id = MarkerCategories.category_id "
+        "WHERE Markers.city = %s "
+    )
+    params = [city]
+    if category:
+        sql += (
+            "AND Markers.business_id IN ("
+            "SELECT MarkerCategories.business_id FROM MarkerCategories "
+            "JOIN Categories ON Categories.category_id = MarkerCategories.category_id "
+            "WHERE Categories.name = %s) "
+        )
+        params.append(category)
+    sql += (
+        "GROUP BY Markers.business_id, Markers.name, Markers.address, Markers.city, "
+        "Markers.stars, Markers.review_count "
+        "ORDER BY Markers.stars DESC, Markers.review_count DESC "
+        "LIMIT %s"
+    )
+    params.append(limit)
+    return query(sql, tuple(params))
+
+
+# Most common categories in a city, for the filter dropdown
+def get_city_categories(city):
+    return query(
+        "SELECT Categories.name, COUNT(*) AS total "
+        "FROM Markers "
+        "JOIN MarkerCategories ON MarkerCategories.business_id = Markers.business_id "
+        "JOIN Categories ON Categories.category_id = MarkerCategories.category_id "
+        "WHERE Markers.city = %s "
+        "GROUP BY Categories.category_id, Categories.name "
+        "ORDER BY total DESC "
+        "LIMIT 40",
+        (city,))
+
+# Returns 1 if added, 0 if it was already on the board
+def add_marker_to_board(board_id, business_id):
+    return execute(
+        "INSERT INTO Boards_Have (board_id, business_id) "
+        "SELECT %s, %s FROM DUAL "
+        "WHERE NOT EXISTS (SELECT 1 FROM Boards_Have WHERE board_id = %s AND business_id = %s)",
+        (board_id, business_id, board_id, business_id))
+
+def get_board_markers(board_id):
+    return query(
+        "SELECT Markers.business_id, Markers.name, Markers.address, Markers.city, "
+        "Markers.stars, Markers.review_count, "
+        "GROUP_CONCAT(Categories.name ORDER BY Categories.name SEPARATOR ', ') AS categories "
+        "FROM Boards_Have "
+        "JOIN Markers ON Markers.business_id = Boards_Have.business_id "
+        "LEFT JOIN MarkerCategories ON MarkerCategories.business_id = Markers.business_id "
+        "LEFT JOIN Categories ON Categories.category_id = MarkerCategories.category_id "
+        "WHERE Boards_Have.board_id = %s "
+        "GROUP BY Markers.business_id, Markers.name, Markers.address, Markers.city, "
+        "Markers.stars, Markers.review_count "
+        "ORDER BY Markers.name",
+        (board_id,))
+
+def remove_marker_from_board(board_id, business_id):
+    return execute(
+        "DELETE FROM Boards_Have WHERE board_id = %s AND business_id = %s",
+        (board_id, business_id))

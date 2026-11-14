@@ -17,30 +17,35 @@
             <div class="card-placeholder">{{ board.title[:1]|upper }}</div>
           {% endif %}
 
-          <div class="card-body">
-            <h2 class="card-title"><a href="/boards/{{ board.board_id }}">{{ board.title }}</a></h2>
-            <p class="card-date">Created {{ board.time_created.strftime('%b %d, %Y') }}</p>
+          <div class="card-body card-body-row">
+            <div>
+              <h2 class="card-title"><a href="/boards/{{ board.board_id }}">{{ board.title }}</a></h2>
+              <p class="card-date">Created {{ board.time_created.strftime('%b %d, %Y') }}</p>
+            </div>
+            <button class="dots-btn" type="button" data-open="menu-{{ board.board_id }}" aria-label="Board options for {{ board.title }}">&bull;&bull;&bull;</button>
           </div>
 
-          <div class="card-footer">
-            <form class="upload-form" method="post" action="/boards/{{ board.board_id }}/image" enctype="multipart/form-data">
-              <input type="file" name="image" accept="image/png,image/jpeg,image/gif,image/webp" required>
-              <button class="btn-small" type="submit">{% if board.image_filename %}Change image{% else %}Upload image{% endif %}</button>
+          <dialog id="menu-{{ board.board_id }}">
+            <h3>{{ board.title }}</h3>
+
+            <form method="post" action="/boards/{{ board.board_id }}/edit" enctype="multipart/form-data" class="menu-section">
+              <label for="title-{{ board.board_id }}">Board name</label>
+              <input type="text" id="title-{{ board.board_id }}" name="title" value="{{ board.title }}" maxlength="50" required>
+
+              <label for="image-{{ board.board_id }}">Change image (optional)</label>
+              <input type="file" id="image-{{ board.board_id }}" name="image" accept="image/png,image/jpeg,image/gif,image/webp">
+
+              <button type="submit">Save changes</button>
             </form>
 
-            <div class="card-actions">
-              <details>
-                <summary class="btn btn-small btn-outline">Rename</summary>
-                <form method="post" action="/boards/{{ board.board_id }}/rename">
-                  <input type="text" name="title" value="{{ board.title }}" maxlength="50" required>
-                  <button class="btn-small" type="submit">Save</button>
-                </form>
-              </details>
-              <form method="post" action="/boards/{{ board.board_id }}/delete" onsubmit="return confirm('Delete this board?');">
-                <button class="btn-small btn-danger" type="submit">Delete</button>
-              </form>
-            </div>
-          </div>
+            <form method="post" action="/boards/{{ board.board_id }}/delete" class="menu-section" onsubmit="return confirm('Delete this board?');">
+              <button class="btn-small btn-danger" type="submit">Delete board</button>
+            </form>
+
+            <form method="dialog">
+              <button class="btn-small btn-outline" type="submit" formnovalidate>Close</button>
+            </form>
+          </dialog>
         </li>
       {% endfor %}
     </ul>
@@ -51,4 +56,12 @@
       <a class="btn" href="/boards/new">Create a board</a>
     </div>
   {% endif %}
+
+  <script>
+    document.querySelectorAll("[data-open]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        document.getElementById(button.dataset.open).showModal();
+      });
+    });
+  </script>
 {% endblock %}

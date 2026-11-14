@@ -1,0 +1,42 @@
+{% macro place_card(marker, board, action='none', saved=False, category='') %}
+<li class="card place-card" id="place-{{ marker.business_id }}">
+  <div class="card-body">
+    <h3 class="card-title">{{ marker.name }}</h3>
+    {% if marker.categories %}
+      <p class="place-category">{{ marker.categories.split(', ')[:3]|join(', ') }}</p>
+    {% endif %}
+    {% if marker.address %}
+      <p class="card-date">{{ marker.address }}</p>
+    {% endif %}
+    <p class="place-rating">
+      {% if marker.stars is not none %}
+        <span class="stars-badge">&#9733; {{ marker.stars }}</span>
+      {% else %}
+        <span class="muted">No rating</span>
+      {% endif %}
+      {% if marker.review_count is not none %}
+        <span class="muted">{{ marker.review_count }} rating{{ '' if marker.review_count == 1 else 's' }}</span>
+      {% endif %}
+    </p>
+  </div>
+
+  {% if action != 'none' %}
+    <div class="card-footer">
+      {% if action == 'add' %}
+        {% if saved %}
+          <span class="added-label">Added to board</span>
+        {% else %}
+          <form method="post" action="/boards/{{ board.board_id }}/add/{{ marker.business_id }}">
+            <input type="hidden" name="category" value="{{ category }}">
+            <button class="btn-small" type="submit">Add to board</button>
+          </form>
+        {% endif %}
+      {% elif action == 'remove' %}
+        <form method="post" action="/boards/{{ board.board_id }}/remove/{{ marker.business_id }}" onsubmit="return confirm('Remove this place from the board?');">
+          <button class="btn-small btn-danger" type="submit">Remove from board</button>
+        </form>
+      {% endif %}
+    </div>
+  {% endif %}
+</li>
+{% endmacro %}
