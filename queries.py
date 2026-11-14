@@ -252,3 +252,8 @@ def get_board_markers(board_id):
         "Markers.stars, Markers.review_count "
         "ORDER BY Markers.name",
         (board_id,))
+
+def remove_marker_from_board(board_id, business_id):
+    return execute(
+        "DELETE FROM Boards_Have WHERE board_id = %s AND business_id = %s",
+        (board_id, business_id))
