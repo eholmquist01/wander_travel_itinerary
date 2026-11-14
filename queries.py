@@ -26,10 +26,16 @@ def query(sql, params=(), one=False):
 # Select top markers for a location, top limit included
 def select_marker_by_location(city, limit):
     return query(
-        "SELECT Markers.business_id, Markers.name, Markers.address, Markers.city, Markers.stars "
+        "SELECT Markers.business_id, Markers.name, Markers.address, Markers.city, "
+        "Markers.stars, Markers.review_count, "
+        "GROUP_CONCAT(Categories.name ORDER BY Categories.name SEPARATOR ', ') AS categories "
         "FROM Markers "
+        "LEFT JOIN MarkerCategories ON MarkerCategories.business_id = Markers.business_id "
+        "LEFT JOIN Categories ON Categories.category_id = MarkerCategories.category_id "
         "WHERE Markers.city = %s "
-        "ORDER BY Markers.stars DESC "
+        "GROUP BY Markers.business_id, Markers.name, Markers.address, Markers.city, "
+        "Markers.stars, Markers.review_count "
+        "ORDER BY Markers.stars DESC, Markers.review_count DESC "
         "LIMIT %s",
         (city, limit)
     )
