@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% from "_place_card.html" import place_card %}
+{% block title %}Add places - {{ board.title }}{% endblock %}
+
+{% block content %}
+  <a class="back-link" href="/profile">Back to my boards</a>
+
+  <div class="page-header">
+    <div>
+      <h1>Places in {{ board.destination }}</h1>
+      <p class="muted">Adding to {{ board.title }}</p>
+    </div>
+    <a class="btn btn-outline" href="/boards/{{ board.board_id }}">View board</a>
+  </div>
+
+  <div class="filter-bar">
+    <form method="get">
+      <label for="category">Category</label>
+      <select id="category" name="category" onchange="this.form.submit()">
+        <option value="">All categories</option>
+        {% for c in categories %}
+          <option value="{{ c.name }}" {% if c.name == category %}selected{% endif %}>{{ c.name }} ({{ c.total }})</option>
+        {% endfor %}
+      </select>
+      <noscript><button class="btn-small" type="submit">Filter</button></noscript>
+      {% if category %}
+        <a href="/boards/{{ board.board_id }}/places">Clear filter</a>
+      {% endif %}
+    </form>
+  </div>
+
+  {% if markers %}
+    <ul class="place-grid">
+      {% for marker in markers %}
+        {{ place_card(marker, board, 'add', marker.business_id in saved_ids, category) }}
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="empty-state">
+      <h2>No places found</h2>
+      <p class="muted">
+        {% if category %}No {{ category }} places in {{ board.destination }}.{% else %}There are no places for {{ board.destination }} yet.{% endif %}
+      </p>
+    </div>
+  {% endif %}
+{% endblock %}

@@ -168,4 +168,64 @@ def add_collaborator(board_id, other_user_id):
         INSERT INTO Users_Create (board_id, user_id, role)
         VALUES (%s, %s, 'collaborator')
     """, (board_id, other_user_id))
-    
+
+def user_on_board(board_id, user_id):
+    row = query(
+        "SELECT 1 AS ok FROM Users_Create WHERE board_id = %s AND user_id = %s",
+        (board_id, user_id), one=True)
+    return row is not None
+
+
+def get_marker(business_id):
+    return query(
+        "SELECT business_id, name FROM Markers WHERE business_id = %s",
+        (business_id,), one=True)
+
+
+def get_board_marker_ids(board_id):
+    rows = query("SELECT business_id FROM Boards_Have WHERE board_id = %s", (board_id,))
+    return {r["business_id"] for r in rows}
+
+
+# Places in a city, optionally only those in one category
+def select_places(city, category, limit):
+    sql = (
+        "SELECT Markers.business_id, Markers.name, Markers.address, Markers.city, "
+        "Markers.stars, Markers.review_count, "
+        "GROUP_CONCAT(Categories.name ORDER BY Categories.name SEPARATOR ', ') AS categories "
+        "FROM Markers "
+        "LEFT JOIN MarkerCategories ON MarkerCategories.business_id = Markers.business_id "
+        "LEFT JOIN Categories ON Categories.category_id = MarkerCategories.category_id "
+        "WHERE Markers.city = %s "
+    )
+    params = [city]
+    if category:
+        sql += (
+            "AND Markers.business_id IN ("
+            "SELECT MarkerCategories.business_id FROM MarkerCategories "
+            "JOIN Categories ON Categories.category_id = MarkerCategories.category_id "
+            "WHERE Categories.name = %s) "
+        )
+        params.append(category)
+    sql += (
+        "GROUP BY Markers.business_id, Markers.name, Markers.address, Markers.city, "
+        "Markers.stars, Markers.review_count "
+        "ORDER BY Markers.stars DESC, Markers.review_count DESC "
+        "LIMIT %s"
+    )
+    params.append(limit)
+    return query(sql, tuple(params))
+
+
+# Most common categories in a city, for the filter dropdown
+def get_city_categories(city):
+    return query(
+        "SELECT Categories.name, COUNT(*) AS total "
+        "FROM Markers "
+        "JOIN MarkerCategories ON MarkerCategories.business_id = Markers.business_id "
+        "JOIN Categories ON Categories.category_id = MarkerCategories.category_id "
+        "WHERE Markers.city = %s "
+        "GROUP BY Categories.category_id, Categories.name "
+        "ORDER BY total DESC "
+        "LIMIT 40",
+        (city,))

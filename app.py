@@ -1,11 +1,13 @@
 import os
 import uuid
-
+from urllib.parse import quote
 from flask import Flask, send_from_directory, render_template, flash, redirect, request, session
 import pymysql
 import pymysql.cursors
 from queries import (get_db, select_marker_by_location, select_top_markers, get_cities, get_boards_by_user,
-                    get_board, create_board, update_board_name, delete_board, set_board_image)
+                    get_board, create_board, update_board_name, delete_board, set_board_image, 
+                    user_on_board, get_marker, get_board_marker_ids, select_places, get_city_categories)
+                    #add_marker_to_board, get_board_markers, remove_marker_from_board)
 
 app = Flask(__name__)
 app.secret_key = "wander-session-key"
@@ -109,7 +111,8 @@ def new_board():
             return render_template("board_form.html", cities=get_cities())
         
         board_id = create_board(session["user_id"], title, destination)
-        return redirect(f"/boards/{board_id}")
+        flash(f"Created {title}. Add some places to it.")
+        return redirect(f"/boards/{board_id}/places")
     return render_template("board_form.html", cities=get_cities())
 
 # View Board Details
@@ -184,5 +187,22 @@ def remove_board(board_id):
         flash("Couldn't delete board")
     return redirect("/profile")
 
+# Browse places in the board's city so they can be added to the board
+@app.route("/boards/<int:board_id>/places")
+def browse_places(board_id):
+    if "user_id" not in session:
+        return redirect("/login")
+
+    board = get_board(board_id)
+    if board is None or not user_on_board(board_id, session["user_id"]):
+        flash("Board not found.")
+        return redirect("/profile")
+
+    category = request.args.get("category", "").strip()
+    markers = select_places(board["destination"], category, 50)
+    categories = get_city_categories(board["destination"])
+    saved_ids = get_board_marker_ids(board_id)
+    return render_template("places.html", board=board, markers=markers,
+                           saved_ids=saved_ids, category=category, categories=categories)
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5027, debug=True)
