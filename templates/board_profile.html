@@ -7,6 +7,12 @@
     <a class="btn" href="/boards/new">New board</a>
   </div>
 
+  <nav class"tabs">
+    <a class="tab {% if view == 'all' %}active{% endif %}" href="/profile?view=all">All</a>
+    <a class="tab {% if view == 'mine' %}active{% endif %}" href="/profile?view=mine">My Boards</a>
+    <a class="tab {% if view == 'shared' %}active{% endif %}" href="/profile?view=shared">Shared Boards</a>
+  </nav>
+
   {% if boards %}
     <ul class="board-grid">
       {% for board in boards %}
@@ -21,10 +27,16 @@
             <div>
               <h2 class="card-title"><a href="/boards/{{ board.board_id }}">{{ board.title }}</a></h2>
               <p class="card-date">Created {{ board.time_created.strftime('%b %d, %Y') }}</p>
+              {% if not is_owner %}
+                <p class="card-date">Shared by {{ board.owner_name }}</p>
+              {% endif %}
             </div>
-            <button class="dots-btn" type="button" data-open="menu-{{ board.board_id }}" aria-label="Board options for {{ board.title }}">&bull;&bull;&bull;</button>
-          </div>
+            {% if is_owner %}
+              <button class="dots-btn" type="button" data-open="menu-{{ board.board_id }}" aria-label="Board options for {{ board.title }}">&bull;&bull;&bull;</button>
+            {% endif %}
+            </div>
 
+          {% if is_owner %}
           <dialog id="menu-{{ board.board_id }}">
             <h3>{{ board.title }}</h3>
 
@@ -46,14 +58,20 @@
               <button class="btn-small btn-outline" type="submit" formnovalidate>Close</button>
             </form>
           </dialog>
+          {% endif %}
         </li>
       {% endfor %}
     </ul>
   {% else %}
     <div class="empty-state">
-      <h2>No boards yet</h2>
-      <p class="muted">Create a board to start planning a trip.</p>
-      <a class="btn" href="/boards/new">Create a board</a>
+      {% if view == 'shared' %}
+        <h2>Nothing shared yet</h2>
+        <p class="muted">Boards shared with you will show up here.</p>
+      {% else %}
+        <h2>No boards yet</h2>
+        <p class="muted">Create a board to start planning a trip.</p>
+        <a class="btn" href="/boards/new">Create a board</a>
+      {% endif %}
     </div>
   {% endif %}
 

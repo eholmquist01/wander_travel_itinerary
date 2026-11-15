@@ -7,7 +7,7 @@ import pymysql.cursors
 from queries import (get_db, select_marker_by_location, select_top_markers, get_cities, get_boards_by_user,
                     get_board, create_board, update_board_name, delete_board, set_board_image, 
                     user_on_board, get_marker, get_board_marker_ids, select_places, get_city_categories,
-                    add_marker_to_board, get_board_markers, remove_marker_from_board)
+                    add_marker_to_board, get_board_markers, remove_marker_from_board, get_board_members, search_users, add_collaborator)
 
 app = Flask(__name__)
 app.secret_key = "wander-session-key"
@@ -94,8 +94,11 @@ def logout():
 def profile():
     if "user_id" not in session:
         return redirect("/login")
-    my_boards = get_boards_by_user(session["user_id"])  
-    return render_template("board_profile.html", name=session["name"], boards=my_boards) 
+    view = request.args.get("view", "all")
+    if view not in ("all", "mine", "shared"):
+        view = "all"
+    my_boards = get_boards_by_user(session["user_id"], view)  
+    return render_template("board_profile.html", name=session["name"], boards=my_boards, view=view) 
 
 # Create a new board form
 @app.route("/boards/new", methods=["GET", "POST"])
@@ -126,7 +129,27 @@ def board_details(board_id):
         flash("Board not found.")
         return redirect("/profile")
     markers = get_board_markers(board_id)
-    return render_template("board_details.html", board=board, markers=markers)
+    is_owner = (board["creator_id"] == session["user_id"])
+    q = request.args.get("q", "").strip()
+    user_results = search_users(q, board_id) if (is_owner and q) else []
+    return render_template("board_details.html", board=board, markers=markers, members=get_board_members(board_id), is_owner=is_owner, q=q, user_results=user_results)
+
+# Add Member to Board
+@app.route("/boards/<int:board_id>/members/add", methods=["POST"])
+def add_member(board_id):
+    if "user_id" not in session:
+        return redirect("/login")
+    
+    board = get_board(board_id)
+    if board is None or board["creator_id"] != session["user_id"]:
+        flash("Only the owner can add people.")
+        return redirect("/profile")
+    
+    if add_collaborator(board_id, int(request.form["user_id"])):
+        flash("Collaborator added.")
+    else:
+        flash("Person already added, or doesn't exit")
+    return redirect(f"/boards/{board_id}")
 
 # Edit Board: change the name and/or image in one save
 @app.route("/boards/<int:board_id>/edit", methods=["POST"])

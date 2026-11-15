@@ -58,15 +58,38 @@ def get_cities():
     return [row["city"] for row in rows]
 
 # Get boards by user
-def get_boards_by_user(user_id):
-    return query(
-        "SELECT Boards.board_id, Boards.image_filename, Boards.title, Boards.destination, Boards.time_created "
+def get_boards_by_user(user_id, view="all"):
+    selected = (
+        "SELECT Boards.board_id, Boards.image_filename, Boards.title, Boards.destination, Boards.time_created, "
+        "Boards.creator_id, Users.name AS owner_name "
         "FROM Boards "
-        "JOIN Users_Create ON Users_Create.board_id = Boards.board_id "
-        "WHERE Users_Create.user_id = %s "
-        "ORDER BY Boards.title",
-        (user_id,)
+        "JOIN Users ON Users.user_id = Boards.creator_id "
     )
+    if view == "mine":
+        return query(
+            selected +
+            "WHERE Boards.creator_id = %s "
+            "ORDER BY Boards.title",
+            (user_id,)
+        )
+    elif view == "shared":
+        return query(
+            selected + 
+            "WHERE Boards.creator_id <> %s "
+            "AND Boards.board_id IN (SELECT board_id FROM Users_Create WHERE user_id = %s) "
+            "ORDER BY Boards.title",
+            (user_id, user_id)
+        )
+
+    else:
+        return query(
+            selected +
+            "WHERE Boards.creator_id = %s "
+            "OR Boards.board_id IN (SELECT board_id FROM Users_Create WHERE user_id = %s) "
+            "ORDER BY Boards.title",
+            (user_id, user_id)
+        )
+
 
 # Get one board for the details page
 def get_board(board_id):
@@ -141,6 +164,38 @@ def set_board_image(board_id, filename, user_id):
         "UPDATE Boards SET image_filename = %s "
         "WHERE board_id = %s AND creator_id = %s",
         (filename, board_id, user_id)
+    )
+
+# Search users by name or email, leaving out anyone on board already
+def search_users(term, board_id):
+    similar = "%" + term + "%"
+
+    return query(
+        "SELECT user_id, name, email FROM Users "
+        "WHERE (name LIKE %s or email LIKE %s) "
+        "AND user_id NOT IN (SELECT user_id FROM Users_Create WHERE board_id = %s) "
+        "AND user_id <> (SELECT creator_id FROM Boards WHERE board_id = %s) "
+        "ORDER BY name "
+        "LIMIT 10",
+        (similar, similar, board_id, board_id)
+    )
+
+# Everyone on the board
+def get_board_members(board_id):
+    return query(
+        "SELECT Users.user_id, Users.name, Users.email, 'owner' AS role "
+        "FROM Boards "
+        "JOIN Users ON Users.user_id = Boards.creator_id "
+        "WHERE Boards.board_id = %s "
+        "UNION "
+        "SELECT Users.user_id, Users.name, Users.email, Users_Create.role "
+        "FROM Users_Create "
+        "JOIN Users ON Users.user_id = Users_Create.user_id "
+        "JOIN Boards On Boards.board_id = Users_Create.board_id "
+        "WHERE Users_Create.board_id = %s "
+        "AND Users_Create.user_id <> Boards.creator_id "
+        "ORDER BY role DESC, name",
+        (board_id, board_id)
     )
 
 # Add collaborator; if this user is already a collaborator, return false to avoid duplicate key
