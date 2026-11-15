@@ -7,10 +7,10 @@
     <a class="btn" href="/boards/new">New board</a>
   </div>
 
-  <nav class"tabs">
-    <a class="tab {% if view == 'all' %}active{% endif %}" href="/profile?view=all">All</a>
-    <a class="tab {% if view == 'mine' %}active{% endif %}" href="/profile?view=mine">My Boards</a>
-    <a class="tab {% if view == 'shared' %}active{% endif %}" href="/profile?view=shared">Shared Boards</a>
+  <nav class="tabs">
+    <a class="btn btn-small {% if view != 'all' %}btn-outline{% endif %}" href="/profile?view=all">All</a>
+    <a class="btn btn-small {% if view != 'mine' %}btn-outline{% endif %}" href="/profile?view=mine">My boards</a>
+    <a class="btn btn-small {% if view != 'shared' %}btn-outline{% endif %}" href="/profile?view=shared">Shared with me</a>
   </nav>
 
   {% if boards %}
