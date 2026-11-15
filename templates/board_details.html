@@ -28,4 +28,37 @@
       <a class="btn" href="/boards/{{ board.board_id }}/places">Add places</a>
     </div>
   {% endif %}
+
+  <section class="members">
+    <h2>Board members</h2>
+    <ul>
+      {% for member in members %}
+        <li>{{ member.name }} <span class="muted">({{ member.role }})</span></li>
+      {% endfor %}
+    </ul>
+
+    {% if is_owner %}
+      <h3>Add people</h3>
+      <form method="get" action="/boards/{{ board.board_id }}">
+        <input type="text" name="q" value="{{ q }}" placeholder="Search by name or email">
+        <button class="btn-small" type="submit">Search</button>
+      </form>
+
+      {% if q %}
+      <ul>
+        {% for user in user_results %}
+        <li>
+          <form method="post" action="/boards/{{ board.board_id }}/members/add">
+            {{ user.name }} <span class="muted">({{ user.email }})</span>
+            <input type="hidden" name="user_id" value="{{ user.user_id }}">
+            <button class="btn-small" type="submit">Add</button>
+          </form>
+        </li>
+        {% else %}
+          <li class="muted">No one matches "{{ q }}".</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    {% endif %}
+  </section>
 {% endblock %}
