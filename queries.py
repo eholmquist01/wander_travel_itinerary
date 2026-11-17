@@ -239,7 +239,14 @@ def get_member_role(board_id, user_id):
         (user_id, board_id, user_id, board_id), one=True)
     return row["role"] if row else None
 
+def can_view_board(board_id, user_id):
+    return get_member_role(board_id, user_id) is not None
 
+def can_edit_board(board_id, user_id):
+    return get_member_role(board_id, user_id) in ("owner", "collaborator")
+
+def is_board_owner(board_id, user_id):
+    return get_member_role(board_id, user_id) == "owner"
 
 def get_marker(business_id):
     return query(
