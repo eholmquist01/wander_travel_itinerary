@@ -16,6 +16,7 @@
   {% if boards %}
     <ul class="board-grid">
       {% for board in boards %}
+        {% set owned = (board.creator_id == session.user_id) %}
         <li class="card">
           {% if board.image_filename %}
             <img class="card-image" src="{{ url_for('static', filename='uploads/' + board.image_filename) }}" alt="Photo for {{ board.title }}">
@@ -27,16 +28,16 @@
             <div>
               <h2 class="card-title"><a href="/boards/{{ board.board_id }}">{{ board.title }}</a></h2>
               <p class="card-date">Created {{ board.time_created.strftime('%b %d, %Y') }}</p>
-              {% if not is_owner %}
+              {% if not owned %}
                 <p class="card-date">Shared by {{ board.owner_name }}</p>
               {% endif %}
             </div>
-            {% if is_owner %}
+            {% if owned %}
               <button class="dots-btn" type="button" data-open="menu-{{ board.board_id }}" aria-label="Board options for {{ board.title }}">&bull;&bull;&bull;</button>
             {% endif %}
-            </div>
+          </div>
 
-          {% if is_owner %}
+          {% if owned %}
           <dialog id="menu-{{ board.board_id }}">
             <h3>{{ board.title }}</h3>
 
