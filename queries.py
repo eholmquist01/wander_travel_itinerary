@@ -230,6 +230,23 @@ def user_on_board(board_id, user_id):
         (board_id, user_id), one=True)
     return row is not None
 
+#indicates rs btwn board and user 
+def get_member_role(board_id, user_id): 
+    row = query(
+        "SELECT CASE WHEN Boards.creator_id = %s THEN 'owner' "
+        "ELSE (SELECT role FROM Users_Create WHERE board_id = %s AND user_id = %s) END AS role "
+        "FROM Boards WHERE Boards.board_id = %s",
+        (user_id, board_id, user_id, board_id), one=True)
+    return row["role"] if row else None
+
+def can_view_board(board_id, user_id):
+    return get_member_role(board_id, user_id) is not None
+
+def can_edit_board(board_id, user_id):
+    return get_member_role(board_id, user_id) in ("owner", "collaborator")
+
+def is_board_owner(board_id, user_id):
+    return get_member_role(board_id, user_id) == "owner"
 
 def get_marker(business_id):
     return query(
