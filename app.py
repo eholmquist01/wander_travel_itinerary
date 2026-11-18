@@ -7,7 +7,9 @@ import pymysql.cursors
 from queries import (get_db, select_marker_by_location, select_top_markers, get_cities, get_boards_by_user,
                     get_board, create_board, update_board_name, delete_board, set_board_image, 
                     user_on_board, get_marker, get_board_marker_ids, select_places, get_city_categories,
-                    add_marker_to_board, get_board_markers, remove_marker_from_board, get_board_members, search_users, add_collaborator)
+                    add_marker_to_board, get_board_markers, remove_marker_from_board, get_board_members, search_users, add_collaborator,
+                    can_view_board, can_edit_board, is_board_owner, remove_collaborator)
+                    #if we're gonna add invites we also need to make sure create_invite, get_pending_invite, get_invite, and delete_invite are created.
 
 app = Flask(__name__)
 app.secret_key = "wander-session-key"
@@ -17,6 +19,17 @@ UPLOAD_DIR = os.path.join(app.root_path, "static", "uploads")
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # 5 MB
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+def require_board(board_id, level="view"):
+    if "user_id" not in session:
+        return None, redirect("/login")
+    board = get_board(board_id)
+    check = {"view": can_view_board, "edit": can_edit_board, "owner": is_board_owner}[level]
+    # Same message for "missing" and "not allowed" so board IDs aren't leaked
+    if board is None or not check(board_id, session["user_id"]):
+        flash("Board not found.")
+        return None, redirect("/profile")
+    return board, None
 
 # Stage 1 + 2 access points
 @app.route("/")
