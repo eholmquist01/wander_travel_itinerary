@@ -20,6 +20,17 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # 5 MB
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+def require_board(board_id, level="view"):
+    if "user_id" not in session:
+        return None, redirect("/login")
+    board = get_board(board_id)
+    check = {"view": can_view_board, "edit": can_edit_board, "owner": is_board_owner}[level]
+    # Same message for "missing" and "not allowed" so board IDs aren't leaked
+    if board is None or not check(board_id, session["user_id"]):
+        flash("Board not found.")
+        return None, redirect("/profile")
+    return board, None
+
 # Stage 1 + 2 access points
 @app.route("/")
 def home():
