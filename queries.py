@@ -329,3 +329,69 @@ def remove_marker_from_board(board_id, business_id):
     return execute(
         "DELETE FROM Boards_Have WHERE board_id = %s AND business_id = %s",
         (board_id, business_id))
+
+
+# Onboarding: this-or-that questions, in display order
+def select_onboarding_pairs():
+    return query(
+        "SELECT pair_key, question, option_a, option_b "
+        "FROM OnboardingPairs "
+        "ORDER BY sort_order"
+    )
+
+# Onboarding: save a user's taste answers, replacing any earlier answers
+def save_onboarding(user_id, free_text, pair_answers, likes, dislikes):
+    execute("DELETE FROM UserPairAnswers WHERE user_id = %s", (user_id,))
+    execute("DELETE FROM UserInterests WHERE user_id = %s", (user_id,))
+
+    execute(
+        "INSERT INTO UserOnboarding (user_id, free_text) VALUES (%s, %s) "
+        "ON DUPLICATE KEY UPDATE free_text = VALUES(free_text)",
+        (user_id, free_text),
+    )
+
+    for pair_key, answer in pair_answers.items():
+        execute(
+            "INSERT INTO UserPairAnswers (user_id, pair_key, answer) VALUES (%s, %s, %s)",
+            (user_id, pair_key, answer),
+        )
+
+    for bucket in likes:
+        execute(
+            "INSERT INTO UserInterests (user_id, bucket, feeling) VALUES (%s, %s, 'like')",
+            (user_id, bucket),
+        )
+
+    for bucket in dislikes:
+        execute(
+            "INSERT INTO UserInterests (user_id, bucket, feeling) VALUES (%s, %s, 'dislike')",
+            (user_id, bucket),
+        )
+
+# Onboarding: a user's saved answers, to pre-fill the form
+# Returns ({pair_key: answer}, {bucket: 'like'/'dislike'}, free_text or None)
+def select_user_onboarding(user_id):
+    pairs = query("SELECT pair_key, answer FROM UserPairAnswers WHERE user_id = %s", (user_id,))
+    interests = query("SELECT bucket, feeling FROM UserInterests WHERE user_id = %s", (user_id,))
+    onboarding = query("SELECT free_text FROM UserOnboarding WHERE user_id = %s", (user_id,), one=True)
+
+    answers = {row["pair_key"]: row["answer"] for row in pairs}
+    feelings = {row["bucket"]: row["feeling"] for row in interests}
+    free_text = onboarding["free_text"] if onboarding else None
+    return answers, feelings, free_text
+
+# Boards: save or update a board's trip vibe (focus is a list of buckets)
+def save_trip_vibe(board_id, city, focus, vibe):
+    execute(
+        "INSERT INTO BoardTripVibe (board_id, city, focus, vibe) VALUES (%s, %s, %s, %s) "
+        "ON DUPLICATE KEY UPDATE city = VALUES(city), focus = VALUES(focus), vibe = VALUES(vibe)",
+        (board_id, city, ";".join(focus), vibe),
+    )
+
+# Boards: a board's trip vibe, with focus as a list. None if not set yet.
+def select_trip_vibe(board_id):
+    row = query("SELECT city, focus, vibe FROM BoardTripVibe WHERE board_id = %s", (board_id,), one=True)
+    if row is None:
+        return None
+    row["focus"] = [b for b in (row["focus"] or "").split(";") if b]
+    return row

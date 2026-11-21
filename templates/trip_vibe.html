@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Trip vibe - {{ board.title }} - Wander{% endblock %}
+
+{% block content %}
+<div class="ob">
+  <a class="back-link" href="/boards/{{ board.board_id }}">Back to {{ board.title }}</a>
+
+  <header class="ob-hero">
+    <h1>Your {{ board.destination }} trip</h1>
+    <p class="muted">Tell us what this trip is about to tailor recommendations for {{ board.title }}.</p>
+  </header>
+
+  <form id="trip-vibe" class="ob-form ob-form-flat" method="post" action="/boards/{{ board.board_id }}/vibe"
+        data-max-focus="{{ max_focus }}">
+    <input type="hidden" name="next" value="{{ next_page }}">
+
+    <section class="ob-panel">
+      <h2 class="ob-question">What's this trip about?</h2>
+      <p class="muted ob-hint">Pick up to {{ max_focus }} · <strong data-focus-count>0</strong> chosen</p>
+
+      <div class="ob-focus-grid">
+        {% for value, label, examples in buckets %}
+          <label class="ob-focus">
+            <input type="checkbox" name="focus" value="{{ value }}" {% if value in focus %}checked{% endif %}>
+            <span class="ob-focus-card">
+              <span class="ob-interest-icon">{{ icon(value, 26) }}</span>
+              <span class="ob-interest-name">{{ label }}</span>
+              <span class="ob-interest-examples">{{ examples }}</span>
+              <span class="ob-option-check">{{ icon("check", 16) }}</span>
+            </span>
+          </label>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="ob-panel">
+      <h2 class="ob-question">Famous spots or hidden gems?</h2>
+
+      <div class="ob-vibe-grid">
+        {% for value, label, hint, icon_name in vibe_options %}
+          <label class="ob-option">
+            <input type="radio" name="vibe" value="{{ value }}" {% if vibe == value %}checked{% endif %}>
+            <span class="ob-option-card">
+              <span class="ob-option-icon">{{ icon(icon_name, 30) }}</span>
+              <span class="ob-option-text">{{ label }}</span>
+              <span class="ob-option-check">{{ icon("check", 16) }}</span>
+            </span>
+          </label>
+        {% endfor %}
+      </div>
+    </section>
+
+    <div class="ob-finish">
+      <button class="ob-btn ob-btn-primary" type="submit">
+        {% if next_page == "places" %}Save and add places{% else %}Save trip vibe{% endif %} {{ icon("arrow-right", 18) }}
+      </button>
+      <a class="muted" href="{{ done_url }}">Skip for now</a>
+    </div>
+  </form>
+</div>
+
+<script src="{{ url_for('static', filename='js/onboarding.js') }}"></script>
+{% endblock %}

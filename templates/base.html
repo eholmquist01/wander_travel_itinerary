@@ -16,6 +16,7 @@
         {% if session.user_id %}
           <span class="nav-greeting">Hi, {{ session.name }}</span>
           <a class="nav-btn" href="/profile">Boards</a>
+          <a class="nav-btn" href="/onboarding">Preferences</a>
           <a class="nav-btn" href="/logout">Log out</a>
         {% else %}
           <a class="nav-btn" href="/login">Log in</a>

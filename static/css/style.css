@@ -542,7 +542,7 @@ dialog h3 {
 }
 
 .search-results form {
-  display: fex;
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
@@ -553,4 +553,499 @@ dialog h3 {
 .filter-bar input[type="text"] {
   width: auto;
   min-width: 220px;
+}
+
+/* ---------- Onboarding and trip vibe ---------- */
+/* Uses the site colors from :root, so it matches the rest of Wander. */
+
+.ob {
+  --ob-radius: 12px;
+  --ob-icon-bg: #f4effa;
+  --ob-shadow: 0 8px 20px rgba(59, 31, 92, 0.08);
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+/* The site styles every label as a bold block with a bottom margin; undo that for option cards */
+.ob label {
+  margin: 0;
+  font-weight: inherit;
+}
+
+.ob .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- Header ---------- */
+
+.ob-hero {
+  margin: 0 0 1.5rem;
+  padding: 1.4rem 1.75rem;
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--purple);
+  border-radius: 10px;
+  background: var(--purple-light);
+}
+
+.ob-hero h1 {
+  margin: 0 0 0.25rem;
+  font-size: clamp(1.6rem, 3.5vw, 2rem);
+}
+
+.ob-hero p {
+  margin: 0;
+}
+
+/* ---------- Progress ---------- */
+
+.ob-progress {
+  margin-bottom: 1.25rem;
+}
+
+.ob-progress-text {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.45rem;
+  color: var(--purple-dark);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.ob-progress-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--purple-light);
+}
+
+.ob-progress-bar {
+  width: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--purple);
+  transition: width 0.35s ease;
+}
+
+/* ---------- Steps ---------- */
+
+.ob-step,
+.ob-panel {
+  margin-bottom: 1.5rem;
+  padding: 2rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+
+/* With JavaScript on, show one step at a time */
+.ob-form.is-stepper .ob-step { display: none; }
+.ob-form.is-stepper .ob-step.is-active {
+  display: block;
+  animation: ob-in 0.3s ease;
+}
+
+@keyframes ob-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.ob-question {
+  margin: 0 0 1.25rem;
+  font-size: clamp(1.4rem, 3vw, 1.75rem);
+}
+
+.ob-hint {
+  margin: -0.9rem 0 1.25rem;
+}
+
+.ob-hint strong { color: var(--purple); }
+
+.ob-pair {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+/* ---------- Big option cards (this-or-that and trip vibe) ---------- */
+
+.ob-option,
+.ob-pill,
+.ob-seg,
+.ob-focus {
+  position: relative;
+  cursor: pointer;
+}
+
+/* Hide the real inputs but keep them usable by keyboard and screen readers */
+.ob input[type="radio"],
+.ob input[type="checkbox"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+}
+
+.ob-pair-options {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.ob-or {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--purple-dark);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  transform: translate(-50%, -50%);
+}
+
+.ob-option-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  height: 100%;
+  min-height: 170px;
+  padding: 1.5rem 1rem;
+  border: 2px solid var(--line);
+  border-radius: var(--ob-radius);
+  background: #fff;
+  color: var(--text);
+  text-align: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.ob-option-card.has-image {
+  justify-content: flex-end;
+  padding: 0 0 1rem;
+  overflow: hidden;
+}
+
+.ob-option-img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+.ob-option-icon,
+.ob-interest-icon {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ob-icon-bg);
+  color: var(--purple);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.ob-option-icon { width: 68px; height: 68px; }
+.ob-interest-icon { flex-shrink: 0; width: 48px; height: 48px; }
+
+.ob-option-text {
+  color: var(--purple-dark);
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.ob-option-sub {
+  margin-top: -0.4rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.ob-option-check {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: var(--purple);
+  color: #fff;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.ob-option:hover .ob-option-card,
+.ob-focus:hover .ob-focus-card {
+  border-color: #b79ad9;
+  box-shadow: var(--ob-shadow);
+  transform: translateY(-3px);
+}
+
+.ob-option input:checked + .ob-option-card,
+.ob-focus input:checked + .ob-focus-card {
+  border-color: var(--purple);
+  background: var(--purple-light);
+  box-shadow: 0 10px 22px rgba(107, 63, 160, 0.18);
+}
+
+.ob-option input:checked + .ob-option-card .ob-option-icon,
+.ob-focus input:checked + .ob-focus-card .ob-interest-icon {
+  background: var(--purple);
+  color: #fff;
+}
+
+.ob-option input:checked + .ob-option-card .ob-option-check,
+.ob-focus input:checked + .ob-focus-card .ob-option-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.ob input:focus-visible + span {
+  outline: 2px solid var(--purple);
+  outline-offset: 3px;
+}
+
+/* Both / Neither / Skip */
+.ob-mini-choices {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.1rem;
+}
+
+.ob-pill span {
+  display: inline-block;
+  padding: 0.35rem 0.9rem;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.ob-pill:hover span { border-color: #b79ad9; }
+
+.ob-pill input:checked + span {
+  border-color: var(--purple-dark);
+  background: var(--purple-dark);
+  color: #fff;
+}
+
+/* ---------- Interest tiles ---------- */
+
+.ob-interest-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 0.9rem;
+}
+
+.ob-interest {
+  min-width: 0;   /* fieldsets otherwise refuse to shrink and overflow the grid */
+  margin: 0;
+  padding: 1rem;
+  border: 2px solid var(--line);
+  border-radius: var(--ob-radius);
+  background: #fff;
+  transition: border-color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+}
+
+.ob-interest-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.ob-interest-name {
+  margin: 0;
+  color: var(--purple-dark);
+  font-weight: 700;
+}
+
+.ob-interest-examples {
+  margin: 0.1rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+/* Tile colors follow the choice inside it */
+.ob-interest:has(input[value="like"]:checked) {
+  border-color: var(--purple);
+  background: var(--purple-light);
+}
+
+.ob-interest:has(input[value="like"]:checked) .ob-interest-icon {
+  background: var(--purple);
+  color: #fff;
+}
+
+.ob-interest:has(input[value="dislike"]:checked) {
+  background: #faf8fc;
+  opacity: 0.65;
+}
+
+/* Love it / Neutral / Not for me */
+.ob-segment {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: 8px;
+  background: var(--ob-icon-bg);
+}
+
+.ob-seg span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.45rem 0.3rem;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.ob-seg input:checked + span {
+  background: #fff;
+  color: var(--purple-dark);
+  box-shadow: 0 1px 3px rgba(59, 31, 92, 0.15);
+}
+
+.ob-seg-like input:checked + span { background: var(--purple); color: #fff; }
+.ob-seg-dislike input:checked + span { background: var(--muted); color: #fff; }
+
+.ob .is-disabled { cursor: not-allowed; }
+.ob .is-disabled span { opacity: 0.4; }
+
+/* ---------- Trip vibe ---------- */
+
+.ob-focus-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.ob-focus-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  height: 100%;
+  padding: 1rem;
+  border: 2px solid var(--line);
+  border-radius: var(--ob-radius);
+  background: #fff;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.ob-focus-card .ob-interest-icon { margin-bottom: 0.3rem; }
+
+.ob-vibe-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.9rem;
+}
+
+.ob-vibe-grid .ob-option-card { min-height: 140px; }
+
+/* ---------- Text box and buttons ---------- */
+
+.ob .ob-textarea {
+  min-height: 110px;
+  padding: 0.9rem 1rem;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.ob-finish {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.ob-form-flat .ob-finish { margin: 0 0 2.5rem; }
+
+.ob-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.5rem;
+}
+
+.ob-nav[hidden] { display: none; }
+
+/* Same shape as the site's .btn */
+.ob .ob-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.65rem 1.2rem;
+  border: 1.5px solid var(--purple);
+  border-radius: 6px;
+  background: var(--purple);
+  color: #fff;
+  font-weight: 600;
+}
+
+.ob .ob-btn:hover {
+  background: var(--purple-hover);
+  border-color: var(--purple-hover);
+}
+
+.ob .ob-btn-secondary {
+  border-color: var(--purple-dark);
+  background: var(--purple-dark);
+}
+
+.ob .ob-btn-ghost {
+  background: #fff;
+  color: var(--purple);
+}
+
+.ob .ob-btn-ghost:hover {
+  background: var(--purple-light);
+  border-color: var(--purple);
+  color: var(--purple-hover);
+}
+
+/* ---------- Small screens ---------- */
+
+@media (max-width: 600px) {
+  .ob-hero { padding: 1.25rem; }
+  .ob-step, .ob-panel { padding: 1.4rem 1.1rem; }
+  .ob-pair-options { grid-template-columns: 1fr; gap: 1.4rem; }
+  .ob-option-card { min-height: 130px; }
+  .ob-vibe-grid { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ob * { transition: none !important; animation: none !important; }
 }
