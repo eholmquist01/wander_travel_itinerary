@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}{% if editing %}Your preferences{% else %}Welcome{% endif %} - Wander{% endblock %}
+
+{% block content %}
+<div class="ob">
+
+  {% if editing %}
+    <a class="back-link" href="/profile">Back to my boards</a>
+  {% endif %}
+
+  <header class="ob-hero">
+    <h1>{% if editing %}Your travel preferences{% else %}How do you like to travel?{% endif %}</h1>
+    <p class="muted">{% if editing %}Update your answers anytime.{% else %}A few quick questions so we can match you with travelers like you.{% endif %}</p>
+  </header>
+
+  <form id="onboarding" class="ob-form" method="post" action="/onboarding"
+        data-start="{{ start_step }}" data-max-likes="{{ max_likes }}">
+    <input type="hidden" name="editing" value="{{ 1 if editing else 0 }}">
+
+    <div class="ob-progress" hidden>
+      <div class="ob-progress-text">
+        <span data-progress-label></span>
+        <span class="muted" data-progress-count></span>
+      </div>
+      <div class="ob-progress-track"><div class="ob-progress-bar"></div></div>
+    </div>
+
+    {# ---------- Step 1: this or that, one pair per screen ---------- #}
+    {% for pair in pairs %}
+      {% set field = "pair_" ~ pair.pair_key %}
+      {% set current = answers.get(pair.pair_key, "") %}
+      {% set icons = pair_icons.get(pair.pair_key, ("sparkle", "sparkle")) %}
+      {% set images = pair_images.get(pair.pair_key, {}) %}
+      <section class="ob-step ob-pair-step" data-label="Quick picks">
+        <h2 class="ob-question">{{ pair.question }}</h2>
+
+        <fieldset class="ob-pair">
+          <legend class="visually-hidden">{{ pair.question }}</legend>
+          <div class="ob-pair-options">
+            {% for side, text, icon_name in [("A", pair.option_a, icons[0]), ("B", pair.option_b, icons[1])] %}
+              <label class="ob-option">
+                <input type="radio" name="{{ field }}" value="{{ side }}" {% if current == side %}checked{% endif %}>
+                <span class="ob-option-card{% if images.get(side) %} has-image{% endif %}">
+                  {% if images.get(side) %}
+                    <img class="ob-option-img" src="{{ images[side] }}" alt="">
+                  {% else %}
+                    <span class="ob-option-icon">{{ icon(icon_name, 34) }}</span>
+                  {% endif %}
+                  <span class="ob-option-text">{{ text }}</span>
+                  <span class="ob-option-check">{{ icon("check", 16) }}</span>
+                </span>
+              </label>
+              {% if side == "A" %}<span class="ob-or" aria-hidden="true">or</span>{% endif %}
+            {% endfor %}
+          </div>
+
+          <div class="ob-mini-choices">
+            {% for value, text in [("both", "Both"), ("neither", "Neither"), ("", "Skip")] %}
+              <label class="ob-pill">
+                <input type="radio" name="{{ field }}" value="{{ value }}" {% if current == value %}checked{% endif %}>
+                <span>{{ text }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+      </section>
+    {% endfor %}
+
+    {# ---------- Step 2: interests ---------- #}
+    <section class="ob-step" id="step-interests" data-label="Your interests">
+      <h2 class="ob-question">What are you into?</h2>
+      <p class="muted ob-hint">Pick up to {{ max_likes }} favorites · <strong data-like-count>0</strong> chosen</p>
+
+      <div class="ob-interest-grid">
+        {% for value, label, examples in buckets %}
+          {% set field = "interest_" ~ value %}
+          {% set current = interests.get(value, "") %}
+          <fieldset class="ob-interest">
+            <legend class="visually-hidden">{{ label }}</legend>
+            <div class="ob-interest-head">
+              <span class="ob-interest-icon">{{ icon(value, 26) }}</span>
+              <div>
+                <p class="ob-interest-name">{{ label }}</p>
+                <p class="ob-interest-examples">{{ examples }}</p>
+              </div>
+            </div>
+            <div class="ob-segment">
+              <label class="ob-seg ob-seg-like">
+                <input type="radio" name="{{ field }}" value="like" {% if current == "like" %}checked{% endif %}>
+                <span>{{ icon("heart", 15) }} Love it</span>
+              </label>
+              <label class="ob-seg">
+                <input type="radio" name="{{ field }}" value="" {% if not current %}checked{% endif %}>
+                <span>Neutral</span>
+              </label>
+              <label class="ob-seg ob-seg-dislike">
+                <input type="radio" name="{{ field }}" value="dislike" {% if current == "dislike" %}checked{% endif %}>
+                <span>{{ icon("x", 15) }} Not for me</span>
+              </label>
+            </div>
+          </fieldset>
+        {% endfor %}
+      </div>
+    </section>
+
+    {# ---------- Step 3: free text and submit ---------- #}
+    <section class="ob-step" id="step-free" data-label="Your perfect day">
+      <h2 class="ob-question">Your perfect day on a trip</h2>
+      <p class="muted ob-hint">Optional.</p>
+      <textarea class="ob-textarea" name="free_text" rows="4"
+                placeholder="e.g. Local coffee, a walk around town, live music at night">{{ free_text }}</textarea>
+
+      <div class="ob-finish">
+        <button class="ob-btn ob-btn-primary" type="submit">
+          {% if editing %}Save changes{% else %}Finish{% endif %} {{ icon("arrow-right", 18) }}
+        </button>
+        {% if not editing %}
+          <a class="muted" href="/profile">Skip for now</a>
+        {% endif %}
+      </div>
+    </section>
+
+    <div class="ob-nav" hidden>
+      <button class="ob-btn ob-btn-ghost" type="button" data-back>{{ icon("arrow-left", 18) }} Back</button>
+      <button class="ob-btn ob-btn-secondary" type="button" data-next>Next {{ icon("arrow-right", 18) }}</button>
+    </div>
+  </form>
+</div>
+
+<script src="{{ url_for('static', filename='js/onboarding.js') }}"></script>
+{% endblock %}
