@@ -395,3 +395,153 @@ def select_trip_vibe(board_id):
         return None
     row["focus"] = [b for b in (row["focus"] or "").split(";") if b]
     return row
+
+# Shadow profiles: the same UserInterests and UserPairAnswers shape as onboarding,
+TRAVEL_BUCKETS = (
+    "food", "nightlife", "culture", "outdoors",
+    "experiences", "relaxation", "shopping", "stays",
+)
+
+def qualifying_shadow_user_ids():
+    """Reviewers with at least 10 reviews of a specifically categorized place."""
+    placeholders = ", ".join(["%s"] * len(TRAVEL_BUCKETS))
+    rows = query(
+        f"""
+        SELECT R.user_id
+        FROM Reviews R
+        WHERE R.user_id IS NOT NULL
+          AND EXISTS (
+              SELECT 1
+              FROM MarkerCategories MC
+              JOIN Categories C ON MC.category_id = C.category_id
+              JOIN CategoryMap CM ON C.name = CM.category
+              WHERE MC.business_id = R.business_id
+                AND CM.type = 'specific'
+                AND CM.bucket IN ({placeholders})
+          )
+        GROUP BY R.user_id
+        HAVING COUNT(DISTINCT R.review_id) >= 10
+        """,
+        TRAVEL_BUCKETS,
+    )
+    return [row["user_id"] for row in rows]
+
+
+
+def infer_profile(user_id):
+    """Return (likes, dislikes, pair_answers) for one reviewer.
+
+    likes and dislikes are bucket lists. pair_answers maps pair_key to
+    'A', 'B', or 'both'. Neutral buckets and unanswered pairs are absent.
+    """
+    placeholders = ", ".join(["%s"] * len(TRAVEL_BUCKETS))
+    bucket_rows = query(
+        f"""
+        SELECT bucket, COUNT(*) AS n, AVG(stars) AS avg_stars
+        FROM (
+            SELECT DISTINCT R.review_id, R.stars, CM.bucket
+            FROM Reviews R
+            JOIN MarkerCategories MC ON MC.business_id = R.business_id
+            JOIN Categories C ON C.category_id = MC.category_id
+            JOIN CategoryMap CM ON C.name = CM.category
+            WHERE R.user_id = %s
+              AND CM.type = 'specific'
+              AND CM.bucket IN ({placeholders})
+        ) AS review_buckets
+        GROUP BY bucket
+        """,
+        (user_id, *TRAVEL_BUCKETS),
+    )
+
+    like_candidates = []
+    dislikes = []
+    for row in bucket_rows:
+        review_count = row["n"]
+        avg_stars = float(row["avg_stars"])
+        if review_count < 3:
+            continue
+        if avg_stars >= 4:
+            like_candidates.append((avg_stars, review_count, row["bucket"]))
+        elif avg_stars <= 2:
+            dislikes.append(row["bucket"])
+    like_candidates.sort(key=lambda item: (item[0], item[1]), reverse=True)
+    likes = [bucket for avg_stars, review_count, bucket in like_candidates[:4]]
+
+    pair_rows = query(
+        f"""
+        SELECT DISTINCT PS.pair_key, PS.side, R.review_id, R.stars
+        FROM Reviews R
+        JOIN MarkerCategories MC ON MC.business_id = R.business_id
+        JOIN Categories C ON C.category_id = MC.category_id
+        JOIN CategoryMap CM ON C.name = CM.category
+        JOIN PairSides PS ON PS.subgroup = CM.subgroup
+        WHERE R.user_id = %s
+          AND CM.type = 'specific'
+          AND CM.bucket IN ({placeholders})
+        """,
+        (user_id, *TRAVEL_BUCKETS),
+    )
+
+    grouped = {}
+    for row in pair_rows:
+        side = (row["side"] or "").strip().upper()
+        if side not in ("A", "B"):
+            continue
+        pair = grouped.setdefault(row["pair_key"], {"A": {}, "B": {}})
+        pair[side][row["review_id"]] = float(row["stars"])
+
+    pair_answers = {}
+    for pair_key, sides in grouped.items():
+        side_a = sides["A"]
+        side_b = sides["B"]
+        classified = set(side_a) | set(side_b)
+        if not classified:
+            continue
+        share_a = len(side_a) / len(classified)
+        share_b = len(side_b) / len(classified)
+        if side_a and side_b:
+            avg_a = sum(side_a.values()) / len(side_a)
+            avg_b = sum(side_b.values()) / len(side_b)
+            star_gap = (avg_a - avg_b) / 4
+        else:
+            star_gap = 0
+        preference = 0.6 * (share_a - share_b) + 0.4 * star_gap
+        if preference > 0.1:
+            pair_answers[pair_key] = "A"
+        elif preference < -0.1:
+            pair_answers[pair_key] = "B"
+        else:
+            pair_answers[pair_key] = "both"
+
+    return likes, dislikes, pair_answers
+
+
+def save_shadow_profile(user_id, likes, dislikes, pair_answers):
+    """Replace this reviewer's inferred rows. Leave real onboarding rows alone."""
+    existing = query(
+        "SELECT user_id FROM UserOnboarding WHERE user_id = %s",
+        (user_id,),
+        one=True,
+    )
+    if existing:
+        return False
+
+    execute("DELETE FROM UserPairAnswers WHERE user_id = %s", (user_id,))
+    execute("DELETE FROM UserInterests WHERE user_id = %s", (user_id,))
+
+    for pair_key, answer in pair_answers.items():
+        execute(
+            "INSERT INTO UserPairAnswers (user_id, pair_key, answer) VALUES (%s, %s, %s)",
+            (user_id, pair_key, answer),
+        )
+    for bucket in likes:
+        execute(
+            "INSERT INTO UserInterests (user_id, bucket, feeling) VALUES (%s, %s, 'like')",
+            (user_id, bucket),
+        )
+    for bucket in dislikes:
+        execute(
+            "INSERT INTO UserInterests (user_id, bucket, feeling) VALUES (%s, %s, 'dislike')",
+            (user_id, bucket),
+        )
+    return True
