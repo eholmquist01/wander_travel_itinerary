@@ -545,3 +545,54 @@ def save_shadow_profile(user_id, likes, dislikes, pair_answers):
             (user_id, bucket),
         )
     return True
+
+# Save many shadow profiles at once (one connection, one commit)
+# profiles: list of (yelp_user_id, likes, dislikes, pair_answers)
+def save_shadow_profiles_bulk(profiles):
+    db = get_db()
+    cursor = db.cursor()
+    try:
+        ids = [(p[0],) for p in profiles]
+        interest_rows, pair_rows = [], []
+        for yelp_user_id, likes, dislikes, pair_answers in profiles:
+            interest_rows += [(yelp_user_id, b, "like") for b in likes]
+            interest_rows += [(yelp_user_id, b, "dislike") for b in dislikes]
+            pair_rows += [(yelp_user_id, k, a) for k, a in pair_answers.items()]
+
+        cursor.executemany("DELETE FROM ShadowInterests WHERE yelp_user_id = %s", ids)
+        cursor.executemany("DELETE FROM ShadowPairAnswers WHERE yelp_user_id = %s", ids)
+        if interest_rows:
+            cursor.executemany(
+                "INSERT INTO ShadowInterests (yelp_user_id, bucket, feeling) VALUES (%s, %s, %s)",
+                interest_rows)
+        if pair_rows:
+            cursor.executemany(
+                "INSERT INTO ShadowPairAnswers (yelp_user_id, pair_key, answer) VALUES (%s, %s, %s)",
+                pair_rows)
+        db.commit()
+    finally:
+        cursor.close()
+        db.close()
+
+# Matching: saved shadow profiles (Yelp reviewers)
+def select_all_shadow_interests():
+    return query("SELECT yelp_user_id AS user_id, bucket, feeling FROM ShadowInterests")
+
+
+def select_all_shadow_pair_answers():
+    return query("SELECT yelp_user_id AS user_id, pair_key, answer FROM ShadowPairAnswers")
+
+
+# Shadow users who have reviewed at least min_places places in a city
+def get_city_candidates(city, min_places=3):
+    rows = query(
+        "SELECT Reviews.user_id "
+        "FROM Reviews "
+        "JOIN Markers ON Markers.business_id = Reviews.business_id "
+        "WHERE Markers.city = %s "
+        "AND Reviews.user_id IN (SELECT yelp_user_id FROM ShadowInterests "
+        "UNION SELECT yelp_user_id FROM ShadowPairAnswers) "
+        "GROUP BY Reviews.user_id "
+        "HAVING COUNT(DISTINCT Reviews.business_id) >= %s",
+        (city, min_places))
+    return [row["user_id"] for row in rows]
